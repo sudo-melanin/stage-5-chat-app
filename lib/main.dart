@@ -3,8 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'firebase_options.dart';
-import 'screens/login_screen.dart';
-import 'screens/chat_list_screen.dart';
+import 'features/auth/presentation/login_screen.dart';
+import 'features/chats/presentation/chat_list_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
