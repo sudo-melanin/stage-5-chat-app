@@ -39,9 +39,23 @@ class AuthController extends Notifier<AsyncValue<void>> {
     state = const AsyncLoading();
 
     try {
-      await ref.read(authRepositoryProvider).signUp(
+      final credential = await ref.read(authRepositoryProvider).signUp(
             email: email,
             password: password,
+          );
+
+          final user = credential.user;
+      if (user == null) {
+        throw FirebaseAuthException(
+          code: 'missing-user',
+          message: 'Account was created, but no user profile was returned.',
+        );
+      }
+
+      await ref.read(userRepositoryProvider).createUserProfile(
+            uid: user.uid,
+            email: user.email ?? email,
+            displayName: email.split('@').first,
           );
 
       state = const AsyncData(null);
