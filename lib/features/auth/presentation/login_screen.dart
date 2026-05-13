@@ -14,6 +14,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   bool _isSignUpMode = false;
 
@@ -51,17 +52,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.listen<AsyncValue<void>>(authControllerProvider, (previous, next) {
       next.whenOrNull(
         error: (error, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.toString())),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.toString())));
         },
       );
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isSignUpMode ? 'Create Account' : 'Sign In'),
-      ),
+      appBar: AppBar(title: Text(_isSignUpMode ? 'Create Account' : 'Sign In')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -120,13 +119,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     TextFormField(
                       controller: _passwordController,
                       enabled: !isLoading,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _submit(),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                        ),
                       ),
                       validator: (value) {
                         final password = value ?? '';
@@ -156,7 +167,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Text(_isSignUpMode ? 'Create Account' : 'Sign In'),
+                            : Text(
+                                _isSignUpMode ? 'Create Account' : 'Sign In',
+                              ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -166,6 +179,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : () {
                               setState(() {
                                 _isSignUpMode = !_isSignUpMode;
+                                _emailController.clear();
+                                _passwordController.clear();
+                                _obscurePassword = true;
                               });
                             },
                       child: Text(

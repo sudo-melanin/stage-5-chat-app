@@ -27,7 +27,9 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: messagesRef.orderBy('createdAt', descending: true).snapshots(),
+              stream: messagesRef
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Container();
@@ -40,11 +42,18 @@ class _ChatScreenState extends State<ChatScreen> {
                     final data = docs[index].data() as Map<String, dynamic>;
                     final isMine = data['senderId'] == uid;
                     return Align(
-                      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isMine
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 4,
+                          horizontal: 8,
+                        ),
                         padding: const EdgeInsets.all(8),
-                        color: isMine ? Colors.blue.shade100 : Colors.grey.shade200,
+                        color: isMine
+                            ? Colors.blue.shade100
+                            : Colors.grey.shade200,
                         child: Text(data['text'] ?? ''),
                       ),
                     );
@@ -78,9 +87,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       .collection('conversations')
                       .doc(widget.conversationId)
                       .update({
-                    'lastMessage': text,
-                    'lastMessageAt': FieldValue.serverTimestamp(),
-                  });
+                        'lastMessage': text,
+                        'lastMessageAt': FieldValue.serverTimestamp(),
+                      });
                 },
               ),
             ],

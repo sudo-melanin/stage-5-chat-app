@@ -12,17 +12,13 @@ class AuthController extends Notifier<AsyncValue<void>> {
     return const AsyncData(null);
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
 
     try {
-      await ref.read(authRepositoryProvider).signIn(
-            email: email,
-            password: password,
-          );
+      await ref
+          .read(authRepositoryProvider)
+          .signIn(email: email, password: password);
 
       state = const AsyncData(null);
     } on FirebaseAuthException catch (error, stackTrace) {
@@ -32,19 +28,15 @@ class AuthController extends Notifier<AsyncValue<void>> {
     }
   }
 
-  Future<void> signUp({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signUp({required String email, required String password}) async {
     state = const AsyncLoading();
 
     try {
-      final credential = await ref.read(authRepositoryProvider).signUp(
-            email: email,
-            password: password,
-          );
+      final credential = await ref
+          .read(authRepositoryProvider)
+          .signUp(email: email, password: password);
 
-          final user = credential.user;
+      final user = credential.user;
       if (user == null) {
         throw FirebaseAuthException(
           code: 'missing-user',
@@ -52,7 +44,9 @@ class AuthController extends Notifier<AsyncValue<void>> {
         );
       }
 
-      await ref.read(userRepositoryProvider).createUserProfile(
+      await ref
+          .read(userRepositoryProvider)
+          .createUserProfile(
             uid: user.uid,
             email: user.email ?? email,
             displayName: email.split('@').first,

@@ -33,5 +33,4 @@ class AuthRepository {
   Future<void> signOut() {
     return _auth.signOut();
   }
-
 }
