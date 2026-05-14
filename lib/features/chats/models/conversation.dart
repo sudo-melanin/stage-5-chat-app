@@ -1,25 +1,56 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Conversation {
-  final String id;
-  final List<String> participants;
-  final String? lastMessage;
-  final Timestamp? lastMessageAt;
-
-  Conversation({
+  const Conversation({
     required this.id,
     required this.participants,
+    required this.participantNames,
+    required this.participantEmails,
     this.lastMessage,
     this.lastMessageAt,
   });
 
-  factory Conversation.fromDoc(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  final String id;
+  final List<String> participants;
+  final Map<String, String> participantNames;
+  final Map<String, String> participantEmails;
+  final String? lastMessage;
+  final Timestamp? lastMessageAt;
+
+  factory Conversation.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+
     return Conversation(
       id: doc.id,
-      participants: List<String>.from(data['participants'] as List),
+      participants: List<String>.from(data['participants'] as List? ?? []),
+      participantNames: Map<String, String>.from(
+        data['participantNames'] as Map? ?? {},
+      ),
+      participantEmails: Map<String, String>.from(
+        data['participantEmails'] as Map? ?? {},
+      ),
       lastMessage: data['lastMessage'] as String?,
       lastMessageAt: data['lastMessageAt'] as Timestamp?,
     );
+  }
+
+  String displayNameFor(String currentUserId) {
+    final otherUserId = participants.firstWhere(
+      (uid) => uid != currentUserId,
+      orElse: () => currentUserId,
+    );
+
+    return participantNames[otherUserId] ??
+        participantEmails[otherUserId] ??
+        'Chat';
+  }
+
+  String displayEmailFor(String currentUserId) {
+    final otherUserId = participants.firstWhere(
+      (uid) => uid != currentUserId,
+      orElse: () => currentUserId,
+    );
+
+    return participantEmails[otherUserId] ?? '';
   }
 }

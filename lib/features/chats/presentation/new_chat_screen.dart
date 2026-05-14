@@ -37,7 +37,8 @@ class _NewChatScreenState extends ConsumerState<NewChatScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => ChatScreen(conversationId: conversationId),
+        builder: (_) =>
+            ChatScreen(conversationId: conversationId, chatTitle: 'New Chat'),
       ),
     );
   }

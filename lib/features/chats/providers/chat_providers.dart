@@ -4,6 +4,7 @@ import '../../auth/providers/auth_providers.dart';
 import '../../users/models/app_user.dart';
 import '../data/chat_repository.dart';
 import '../models/conversation.dart';
+import '../models/message.dart';
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(ref.watch(firestoreProvider));
@@ -17,6 +18,13 @@ final userConversationsProvider = StreamProvider<List<Conversation>>((ref) {
   }
 
   return ref.watch(chatRepositoryProvider).watchUserConversations(user.uid);
+});
+
+final messagesProvider = StreamProvider.family<List<Message>, String>((
+  ref,
+  conversationId,
+) {
+  return ref.watch(chatRepositoryProvider).watchMessages(conversationId);
 });
 
 final userSearchQueryProvider =

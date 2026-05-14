@@ -5,6 +5,7 @@ import '../../auth/providers/auth_controller.dart';
 import '../providers/chat_providers.dart';
 import 'chat_screen.dart';
 import 'new_chat_screen.dart';
+import '../../auth/providers/auth_providers.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -73,17 +74,29 @@ class ChatListScreen extends ConsumerWidget {
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final conversation = conversations[index];
+              final currentUser = ref.watch(authStateProvider).value;
+
+              final title = currentUser == null
+                  ? 'Chat'
+                  : conversation.displayNameFor(currentUser.uid);
+
+              final subtitle = currentUser == null
+                  ? ''
+                  : conversation.lastMessage ??
+                        conversation.displayEmailFor(currentUser.uid);
 
               return ListTile(
-                title: Text(conversation.lastMessage ?? 'New chat'),
-                subtitle: Text(conversation.participants.join(', ')),
+                title: Text(title),
+                subtitle: Text(subtitle),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          ChatScreen(conversationId: conversation.id),
+                      builder: (_) => ChatScreen(
+                        conversationId: conversation.id,
+                        chatTitle: 'Chat',
+                      ),
                     ),
                   );
                 },
