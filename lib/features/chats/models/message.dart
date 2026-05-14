@@ -8,6 +8,7 @@ class Message {
     required this.createdAt,
     required this.deliveredTo,
     required this.seenBy,
+    required this.reactions,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class Message {
   final Timestamp? createdAt;
   final List<String> deliveredTo;
   final List<String> seenBy;
+  final Map<String, String> reactions;
 
   factory Message.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
@@ -27,17 +29,24 @@ class Message {
       createdAt: data['createdAt'] as Timestamp?,
       deliveredTo: List<String>.from(data['deliveredTo'] as List? ?? []),
       seenBy: List<String>.from(data['seenBy'] as List? ?? []),
+      reactions: Map<String, String>.from(data['reactions'] as Map? ?? {}),
     );
   }
 
   String statusFor(String currentUserId) {
     if (senderId != currentUserId) return '';
 
-    final otherUsersDelivered = deliveredTo.where((uid) => uid != currentUserId);
+    final otherUsersDelivered = deliveredTo.where(
+      (uid) => uid != currentUserId,
+    );
     final otherUsersSeen = seenBy.where((uid) => uid != currentUserId);
 
     if (otherUsersSeen.isNotEmpty) return 'Seen';
     if (otherUsersDelivered.isNotEmpty) return 'Delivered';
     return 'Sent';
+  }
+
+  bool hasReactionFrom(String userId) {
+    return reactions.containsKey(userId);
   }
 }

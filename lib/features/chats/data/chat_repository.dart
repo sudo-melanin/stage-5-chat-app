@@ -97,6 +97,7 @@ class ChatRepository {
         'createdAt': FieldValue.serverTimestamp(),
         'deliveredTo': [senderId],
         'seenBy': [senderId],
+        'reactions': {},
       });
 
       transaction.update(conversationRef, {
@@ -106,7 +107,7 @@ class ChatRepository {
     });
   }
 
-    Future<void> markMessagesDeliveredAndSeen({
+  Future<void> markMessagesDeliveredAndSeen({
     required String conversationId,
     required String userId,
   }) async {
@@ -143,5 +144,30 @@ class ChatRepository {
     return _conversationsRef.doc(conversationId).update({
       'typing.$userId': isTyping,
     });
+  }
+
+  Future<void> setReaction({
+    required String conversationId,
+    required String messageId,
+    required String userId,
+    required String emoji,
+  }) {
+    return _conversationsRef
+        .doc(conversationId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'reactions.$userId': emoji});
+  }
+
+  Future<void> removeReaction({
+    required String conversationId,
+    required String messageId,
+    required String userId,
+  }) {
+    return _conversationsRef
+        .doc(conversationId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'reactions.$userId': FieldValue.delete()});
   }
 }
