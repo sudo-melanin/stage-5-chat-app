@@ -90,6 +90,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       conversationProvider(widget.conversationId),
     );
 
+    if (currentUser != null) {
+      ref.read(chatRepositoryProvider).markMessagesDeliveredAndSeen(
+            conversationId: widget.conversationId,
+            userId: currentUser.uid,
+          );
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.chatTitle)),
       body: Column(
@@ -143,14 +150,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           children: [
                             Text(message.text),
                             const SizedBox(height: 4),
-                            Text(
-                              TimeFormatter.relative(message.createdAt),
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  TimeFormatter.relative(message.createdAt),
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                                if (isMine) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    message.statusFor(currentUser!.uid),
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                   ),
+                                ],
+                              ],
                             ),
                           ],
                         ),

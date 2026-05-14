@@ -95,6 +95,8 @@ class ChatRepository {
         'senderId': senderId,
         'text': trimmedText,
         'createdAt': FieldValue.serverTimestamp(),
+        'deliveredTo': [senderId],
+        'seenBy': [senderId],
       });
 
       transaction.update(conversationRef, {
@@ -102,6 +104,28 @@ class ChatRepository {
         'lastMessageAt': FieldValue.serverTimestamp(),
       });
     });
+  }
+
+    Future<void> markMessagesDeliveredAndSeen({
+    required String conversationId,
+    required String userId,
+  }) async {
+    final messagesSnapshot = await _conversationsRef
+        .doc(conversationId)
+        .collection('messages')
+        .where('senderId', isNotEqualTo: userId)
+        .get();
+
+    final batch = _firestore.batch();
+
+    for (final doc in messagesSnapshot.docs) {
+      batch.update(doc.reference, {
+        'deliveredTo': FieldValue.arrayUnion([userId]),
+        'seenBy': FieldValue.arrayUnion([userId]),
+      });
+    }
+
+    await batch.commit();
   }
 
   Stream<Conversation?> watchConversation(String conversationId) {
