@@ -61,6 +61,7 @@ class ChatRepository {
       'lastMessage': null,
       'lastMessageAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
+      'typing': {currentUserId: false, otherUserId: false},
     });
 
     return conversationId;
@@ -100,6 +101,23 @@ class ChatRepository {
         'lastMessage': trimmedText,
         'lastMessageAt': FieldValue.serverTimestamp(),
       });
+    });
+  }
+
+  Stream<Conversation?> watchConversation(String conversationId) {
+    return _conversationsRef.doc(conversationId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return Conversation.fromDoc(doc);
+    });
+  }
+
+  Future<void> setTypingStatus({
+    required String conversationId,
+    required String userId,
+    required bool isTyping,
+  }) {
+    return _conversationsRef.doc(conversationId).update({
+      'typing.$userId': isTyping,
     });
   }
 }

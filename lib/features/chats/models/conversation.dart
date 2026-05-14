@@ -6,6 +6,7 @@ class Conversation {
     required this.participants,
     required this.participantNames,
     required this.participantEmails,
+    required this.typing,
     this.lastMessage,
     this.lastMessageAt,
   });
@@ -14,6 +15,7 @@ class Conversation {
   final List<String> participants;
   final Map<String, String> participantNames;
   final Map<String, String> participantEmails;
+  final Map<String, bool> typing;
   final String? lastMessage;
   final Timestamp? lastMessageAt;
 
@@ -29,6 +31,7 @@ class Conversation {
       participantEmails: Map<String, String>.from(
         data['participantEmails'] as Map? ?? {},
       ),
+      typing: Map<String, bool>.from(data['typing'] as Map? ?? {}),
       lastMessage: data['lastMessage'] as String?,
       lastMessageAt: data['lastMessageAt'] as Timestamp?,
     );
@@ -52,5 +55,11 @@ class Conversation {
     );
 
     return participantEmails[otherUserId] ?? '';
+  }
+
+  bool isOtherUserTyping(String currentUserId) {
+    return typing.entries.any((entry) {
+      return entry.key != currentUserId && entry.value == true;
+    });
   }
 }

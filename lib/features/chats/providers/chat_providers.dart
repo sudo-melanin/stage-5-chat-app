@@ -55,3 +55,10 @@ final searchedUsersProvider = StreamProvider<List<AppUser>>((ref) {
 
   return ref.watch(userRepositoryProvider).searchUsers(query, currentUser.uid);
 });
+
+final conversationProvider = StreamProvider.family<Conversation?, String>((
+  ref,
+  conversationId,
+) {
+  return ref.watch(chatRepositoryProvider).watchConversation(conversationId);
+});

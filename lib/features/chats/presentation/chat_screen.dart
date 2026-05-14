@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 
 import '../../auth/providers/auth_providers.dart';
 import '../providers/chat_providers.dart';
@@ -21,10 +22,12 @@ class ChatScreen extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _textController = TextEditingController();
+  Timer? _typingTimer;
 
   @override
   void dispose() {
     _textController.dispose();
+    _typingTimer?.cancel();
     super.dispose();
   }
 
@@ -39,6 +42,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     await ref
         .read(chatRepositoryProvider)
+        .setTypingStatus(
+          conversationId: widget.conversationId,
+          userId: currentUser.uid,
+          isTyping: false,
+        );
+
+    await ref
+        .read(chatRepositoryProvider)
         .sendTextMessage(
           conversationId: widget.conversationId,
           senderId: currentUser.uid,
@@ -46,10 +57,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
   }
 
+  void _handleTyping(String value) {
+    final currentUser = ref.read(authStateProvider).value;
+    if (currentUser == null) return;
+
+    ref
+        .read(chatRepositoryProvider)
+        .setTypingStatus(
+          conversationId: widget.conversationId,
+          userId: currentUser.uid,
+          isTyping: true,
+        );
+
+    _typingTimer?.cancel();
+
+    _typingTimer = Timer(const Duration(seconds: 2), () {
+      ref
+          .read(chatRepositoryProvider)
+          .setTypingStatus(
+            conversationId: widget.conversationId,
+            userId: currentUser.uid,
+            isTyping: false,
+          );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(authStateProvider).value;
     final messagesState = ref.watch(messagesProvider(widget.conversationId));
+    final conversationState = ref.watch(
+      conversationProvider(widget.conversationId),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(widget.chatTitle)),
@@ -132,17 +171,44 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
           ),
+          conversationState.when(
+            data: (conversation) {
+              if (conversation == null || currentUser == null) {
+                return const SizedBox.shrink();
+              }
+
+              final isTyping = conversation.isOtherUserTyping(currentUser.uid);
+
+              if (!isTyping) return const SizedBox.shrink();
+
+              return const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Typing...',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (error, _) => const SizedBox.shrink(),
+          ),
           SafeArea(
             top: false,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
+                      onChanged: _handleTyping,
                       controller: _textController,
                       minLines: 1,
                       maxLines: 4,
+
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _sendMessage(),
                       decoration: const InputDecoration(
