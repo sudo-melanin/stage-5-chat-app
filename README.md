@@ -51,8 +51,11 @@ UI components were refactored into reusable widgets such as:
 - Audio delete state may not fully remove playback in all cases
 - Reaction aggregation is basic (no counts yet)
 
-## Demo
-[Add your video link here]
+## Video Demo
+https://youtu.be/cnz7T2R59II
+
+## Live Demo Link (Appetize)
+
 
 ## Author
 Amos Emmanuel for HNG Internship 14
