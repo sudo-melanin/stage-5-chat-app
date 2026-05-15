@@ -7,7 +7,10 @@ import '../models/conversation.dart';
 import '../models/message.dart';
 
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
-  return ChatRepository(ref.watch(firestoreProvider));
+  return ChatRepository(
+    ref.watch(firestoreProvider),
+    ref.watch(firebaseStorageProvider),
+  );
 });
 
 final userConversationsProvider = StreamProvider<List<Conversation>>((ref) {

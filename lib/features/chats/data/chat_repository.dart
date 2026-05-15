@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../models/conversation.dart';
 import '../models/message.dart';
 
 class ChatRepository {
-  ChatRepository(this._firestore);
+  ChatRepository(this._firestore, this._storage);
 
   final FirebaseFirestore _firestore;
+  final FirebaseStorage _storage;
   final _uuid = const Uuid();
 
   CollectionReference<Map<String, dynamic>> get _conversationsRef =>
@@ -98,6 +101,9 @@ class ChatRepository {
         'deliveredTo': [senderId],
         'seenBy': [senderId],
         'reactions': {},
+        'editedAt': null,
+        'deletedFor': [],
+        'deletedForEveryone': false,
       });
 
       transaction.update(conversationRef, {
@@ -169,5 +175,92 @@ class ChatRepository {
         .collection('messages')
         .doc(messageId)
         .update({'reactions.$userId': FieldValue.delete()});
+  }
+
+  Future<void> editMessage({
+    required String conversationId,
+    required String messageId,
+    required String text,
+  }) {
+    final trimmedText = text.trim();
+    if (trimmedText.isEmpty) return Future.value();
+
+    return _conversationsRef
+        .doc(conversationId)
+        .collection('messages')
+        .doc(messageId)
+        .update({
+          'text': trimmedText,
+          'editedAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  Future<void> deleteMessageForMe({
+    required String conversationId,
+    required String messageId,
+    required String userId,
+  }) {
+    return _conversationsRef
+        .doc(conversationId)
+        .collection('messages')
+        .doc(messageId)
+        .update({
+          'deletedFor': FieldValue.arrayUnion([userId]),
+        });
+  }
+
+  Future<void> deleteMessageForEveryone({
+    required String conversationId,
+    required String messageId,
+  }) {
+    return _conversationsRef
+        .doc(conversationId)
+        .collection('messages')
+        .doc(messageId)
+        .update({
+          'text': '',
+          'deletedForEveryone': true,
+          'editedAt': FieldValue.serverTimestamp(),
+          'reactions': {},
+        });
+  }
+
+  Future<void> sendAudioMessage({
+    required String conversationId,
+    required String senderId,
+    required String filePath,
+    required int durationMs,
+  }) async {
+    final conversationRef = _conversationsRef.doc(conversationId);
+    final messageRef = conversationRef.collection('messages').doc();
+
+    final storageRef = _storage.ref(
+      'voice_notes/$conversationId/${messageRef.id}.m4a',
+    );
+
+    await storageRef.putFile(File(filePath));
+    final audioUrl = await storageRef.getDownloadURL();
+
+    await _firestore.runTransaction((transaction) async {
+      transaction.set(messageRef, {
+        'senderId': senderId,
+        'type': 'audio',
+        'text': 'Voice message',
+        'audioUrl': audioUrl,
+        'audioDurationMs': durationMs,
+        'createdAt': FieldValue.serverTimestamp(),
+        'deliveredTo': [senderId],
+        'seenBy': [senderId],
+        'reactions': {},
+        'editedAt': null,
+        'deletedFor': [],
+        'deletedForEveryone': false,
+      });
+
+      transaction.update(conversationRef, {
+        'lastMessage': 'Voice message',
+        'lastMessageAt': FieldValue.serverTimestamp(),
+      });
+    });
   }
 }
