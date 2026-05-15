@@ -55,6 +55,7 @@ UI components were refactored into reusable widgets such as:
 https://youtu.be/cnz7T2R59II
 
 ## Live Demo Link (Appetize)
+https://appetize.io/app/b_f4q6yfvl6oxh7fhjqkmeelw3ua
 
 
 ## Author
