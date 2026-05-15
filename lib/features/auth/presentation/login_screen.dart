@@ -14,8 +14,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
+  bool _obscurePassword = true;
   bool _isSignUpMode = false;
 
   @override
@@ -88,18 +88,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ? 'Create an account to start chatting.'
                           : 'Sign in to continue your conversations.',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
+
+                    // EMAIL FIELD
                     TextFormField(
                       controller: _emailController,
                       enabled: !isLoading,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email_outlined),
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
                       validator: (value) {
                         final email = value?.trim() ?? '';
@@ -115,7 +122,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 16),
+
+                    // PASSWORD FIELD
                     TextFormField(
                       controller: _passwordController,
                       enabled: !isLoading,
@@ -124,8 +134,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onFieldSubmitted: (_) => _submit(),
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock_outline),
+                        filled: true,
+                        fillColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         suffixIcon: IconButton(
                           onPressed: () {
                             setState(() {
@@ -153,11 +169,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 24),
+
+                    // BUTTON
                     SizedBox(
                       width: double.infinity,
                       height: 48,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: isLoading ? null : _submit,
                         child: isLoading
                             ? const SizedBox(
@@ -172,7 +191,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                       ),
                     ),
+
                     const SizedBox(height: 12),
+
+                    // SWITCH MODE
                     TextButton(
                       onPressed: isLoading
                           ? null

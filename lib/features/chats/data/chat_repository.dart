@@ -219,6 +219,8 @@ class ChatRepository {
         .doc(messageId)
         .update({
           'text': '',
+          'audioUrl': null,
+          'audioDurationMs': null,
           'deletedForEveryone': true,
           'editedAt': FieldValue.serverTimestamp(),
           'reactions': {},

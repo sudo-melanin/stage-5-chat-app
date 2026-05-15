@@ -7,7 +7,6 @@ import '../widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/utils/time_formatter.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../models/message.dart';
 import '../providers/chat_providers.dart';
@@ -177,7 +176,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   _showReactionPicker(message);
                 },
               ),
-              if (isMine)
+              if (isMine && !message.isAudio)
                 ListTile(
                   leading: const Icon(Icons.edit_outlined),
                   title: const Text('Edit message'),
@@ -268,120 +267,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildReactionBadge(Message message, bool isMine) {
-    if (message.reactions.isEmpty || message.deletedForEveryone) {
-      return const SizedBox.shrink();
-    }
-
-    return Transform.translate(
-      offset: const Offset(0, -6),
-      child: Container(
-        margin: EdgeInsets.only(left: isMine ? 0 : 14, right: isMine ? 14 : 0),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Text(
-          message.reactions.values.toSet().join(' '),
-          style: const TextStyle(fontSize: 14),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageBubble({
-    required Message message,
-    required bool isMine,
-    required String currentUserId,
-  }) {
-    return GestureDetector(
-      onLongPress: () => _showMessageActions(message: message, isMine: isMine),
-      child: Align(
-        alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-        child: Column(
-          crossAxisAlignment: isMine
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width * 0.72,
-              ),
-              decoration: BoxDecoration(
-                color: isMine
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: isMine
-                    ? CrossAxisAlignment.end
-                    : CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (message.isAudio && message.audioUrl != null)
-                    AudioMessageBubble(
-                      audioUrl: message.audioUrl!,
-                      durationMs: message.audioDurationMs ?? 0,
-                    )
-                  else
-                    HighlightedMessageText(
-                      text: message.visibleText,
-                      query: _searchQuery,
-                    ),
-                  if (message.isEdited && !message.deletedForEveryone) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      'Edited',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        TimeFormatter.relative(message.createdAt),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      if (isMine) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          message.statusFor(currentUserId),
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            _buildReactionBadge(message, isMine),
-          ],
-        ),
-      ),
     );
   }
 
@@ -506,7 +391,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
                 return ListView.builder(
                   reverse: true,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   itemCount: visibleMessages.length,
                   itemBuilder: (context, index) {
                     final message = visibleMessages[index];
@@ -518,10 +403,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
                     final isMine = message.senderId == currentUserId;
 
-                    return _buildMessageBubble(
+                    return MessageBubble(
                       message: message,
                       isMine: isMine,
                       currentUserId: currentUserId,
+                      searchQuery: _searchQuery,
+                      onLongPress: () =>
+                          _showMessageActions(message: message, isMine: isMine),
                     );
                   },
                 );
@@ -571,36 +459,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       onCancel: () => _stopRecording(send: false),
                       onSend: () => _stopRecording(send: true),
                     )
-                  : Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _textController,
-                            minLines: 1,
-                            maxLines: 4,
-                            textInputAction: TextInputAction.send,
-                            onChanged: _handleTyping,
-                            onSubmitted: (_) => _sendMessage(),
-                            decoration: const InputDecoration(
-                              hintText: 'Type a message',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 12,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.mic),
-                          onPressed: _startRecording,
-                        ),
-                        IconButton.filled(
-                          icon: const Icon(Icons.send),
-                          onPressed: _sendMessage,
-                        ),
-                      ],
+                  : ChatInputBar(
+                      controller: _textController,
+                      onChanged: _handleTyping,
+                      onSubmitted: (_) => _sendMessage(),
+                      onStartRecording: _startRecording,
+                      onSendMessage: _sendMessage,
                     ),
             ),
           ),
